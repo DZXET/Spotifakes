@@ -162,7 +162,7 @@ const playlist = [
             {
                 title: "Sleep Walking Orchestra",
                 artist: "BUMP OF CHICKEN",
-                src: "song151.mp3",
+                src: "song15.mp3",
                 cover: "cover15.jpg"
             },
             {
@@ -474,4 +474,5 @@ audio.onended = () => {
 loadSong(index);
 audio.volume = 1;
 updateVolumeUI();
+
 drawWave();
