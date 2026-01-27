@@ -207,6 +207,7 @@ const playlist = [
 // Flatten songs for easier access
 const songs = playlist.flatMap(cat => cat.songs);
 let index = 0;
+let isLoadingSong = false; // Flag to prevent multiple simultaneous loads
 
 /* ========== Audio Context & Analyser Setup ========== */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -278,22 +279,67 @@ function drawWave() {
     }
 }
 
-/* ========== Load Song (with smooth background fade) ========== */
-function loadSong(i) {
+/* ========== Load Song (IMPROVED with error handling) ========== */
+function loadSong(i, autoplay = false) {
+    if (isLoadingSong) return; // Prevent multiple simultaneous loads
+    isLoadingSong = true;
+    
     const s = songs[i];
+    
+    // Stop current playback and reset
+    const wasPlaying = !audio.paused;
+    audio.pause();
+    audio.currentTime = 0;
+    
+    // Reset progress bar
+    bar.style.width = "0%";
+    current.textContent = "0:00";
+    
+    // Remove playing state
+    cover.classList.remove("playing");
     
     // Smooth transition for background
     bg.style.opacity = 0;
     
     setTimeout(() => {
-        audio.src = s.src;
+        // Update UI
         cover.style.backgroundImage = `url(${s.cover})`;
         bg.style.backgroundImage = `url(${s.cover})`;
         title.textContent = s.title;
         artist.textContent = s.artist;
         
-        // Fade back in if playing
-        if (!audio.paused) {
+        // Load new audio
+        audio.src = s.src;
+        audio.load();
+        
+        // When audio is ready to play
+        audio.oncanplaythrough = () => {
+            isLoadingSong = false;
+            
+            if (autoplay || wasPlaying) {
+                play().catch(err => {
+                    console.error("Playback failed:", err);
+                    pause();
+                });
+            }
+        };
+        
+        // Handle loading errors
+        audio.onerror = () => {
+            console.error("Error loading audio:", s.src);
+            isLoadingSong = false;
+            pause();
+            
+            // Try to play next song after error
+            setTimeout(() => {
+                if (index < songs.length - 1) {
+                    next.click();
+                }
+            }, 1000);
+        };
+        
+        // Fade back in if was playing
+        if (wasPlaying || autoplay) {
             setTimeout(() => {
                 bg.style.opacity = 1;
             }, 100);
@@ -303,18 +349,38 @@ function loadSong(i) {
     highlight();
 }
 
-/* ========== Play & Pause ========== */
+/* ========== Play & Pause (IMPROVED with error handling) ========== */
 function play() {
-    initAudioContext();
-    audio.play();
-    
-    // Toggle icons
-    playIcon.style.display = "none";
-    pauseIcon.style.display = "block";
-    
-    // Add spinning animation
-    cover.classList.add("playing");
-    bg.style.opacity = 1;
+    return new Promise((resolve, reject) => {
+        initAudioContext();
+        
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    // Toggle icons
+                    playIcon.style.display = "none";
+                    pauseIcon.style.display = "block";
+                    
+                    // Add spinning animation
+                    cover.classList.add("playing");
+                    bg.style.opacity = 1;
+                    
+                    resolve();
+                })
+                .catch(error => {
+                    console.error("Play failed:", error);
+                    
+                    // Reset UI on error
+                    playIcon.style.display = "block";
+                    pauseIcon.style.display = "none";
+                    cover.classList.remove("playing");
+                    
+                    reject(error);
+                });
+        }
+    });
 }
 
 function pause() {
@@ -329,24 +395,32 @@ function pause() {
     bg.style.opacity = 0;
 }
 
-playBtn.onclick = () => (audio.paused ? play() : pause());
+playBtn.onclick = () => {
+    if (audio.paused) {
+        play().catch(err => console.error("Playback error:", err));
+    } else {
+        pause();
+    }
+};
 
-/* ========== Next / Prev ========== */
+/* ========== Next / Prev (IMPROVED) ========== */
 prev.onclick = () => {
+    if (isLoadingSong) return; // Prevent spam clicking
+    
     index = (index - 1 + songs.length) % songs.length;
-    loadSong(index);
-    setTimeout(() => play(), 500);
+    loadSong(index, true);
 };
 
 next.onclick = () => {
+    if (isLoadingSong) return; // Prevent spam clicking
+    
     index = (index + 1) % songs.length;
-    loadSong(index);
-    setTimeout(() => play(), 500);
+    loadSong(index, true);
 };
 
 /* ========== Progress Bar ========== */
 audio.ontimeupdate = () => {
-    if (audio.duration) {
+    if (audio.duration && !isNaN(audio.duration)) {
         bar.style.width = (audio.currentTime / audio.duration) * 100 + "%";
         current.textContent = format(audio.currentTime);
         duration.textContent = format(audio.duration);
@@ -354,9 +428,13 @@ audio.ontimeupdate = () => {
 };
 
 progress.onclick = (e) => {
+    if (!audio.duration || isNaN(audio.duration)) return;
+    
     const rect = progress.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    audio.currentTime = (clickX / progress.clientWidth) * audio.duration;
+    const newTime = (clickX / progress.clientWidth) * audio.duration;
+    
+    audio.currentTime = newTime;
 };
 
 /* ========== Volume ========== */
@@ -420,10 +498,12 @@ playlist.forEach((category, catIndex) => {
         div.style.fontSize = "13px";
         
         div.onclick = () => {
+            if (isLoadingSong) return; // Prevent clicks during loading
+            
             index = songList;
-            loadSong(index);
+            loadSong(index, true);
+            
             setTimeout(() => {
-                play();
                 sidebar.classList.remove("show");
                 overlay.style.display = "none";
             }, 500);
@@ -463,16 +543,32 @@ function format(time) {
     return `${m}:${s}`;
 }
 
-/* ========== Auto play next song ========== */
+/* ========== Auto play next song (IMPROVED) ========== */
 audio.onended = () => {
+    if (isLoadingSong) return;
+    
     index = (index + 1) % songs.length;
-    loadSong(index);
-    setTimeout(() => play(), 500);
+    loadSong(index, true);
+};
+
+/* ========== Additional Error Handling ========== */
+// Handle audio stalling
+audio.onstalled = () => {
+    console.warn("Audio stalled, attempting to continue...");
+};
+
+// Handle audio waiting for data
+audio.onwaiting = () => {
+    console.log("Buffering...");
+};
+
+// Handle successful audio load
+audio.onloadeddata = () => {
+    console.log("Audio loaded successfully");
 };
 
 /* ========== Initialize ========== */
-loadSong(index);
+loadSong(index, false);
 audio.volume = 1;
 updateVolumeUI();
-
 drawWave();
