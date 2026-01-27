@@ -827,3 +827,18 @@ if (searchInput && clearSearchBtn) {
 audio.volume = 1;
 updateVolumeUI();
 drawWave();
+
+/* ========== Loading Screen ========== */
+window.addEventListener('load', () => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    
+    // Wait minimum 1.5 seconds to show the loading screen nicely
+    setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+        
+        // Remove from DOM after fade out animation
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }, 1500);
+});

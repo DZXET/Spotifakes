@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotifakes</title>
+    <title>Spotify Style Player</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="icon.png">
     
@@ -25,6 +25,20 @@
     <meta name="author" content="DZXET">
 </head>
 <body>
+<!-- Loading Screen -->
+<div class="loading-screen" id="loadingScreen">
+    <div class="loading-content">
+        <img class="spotify-logo" src="https://media.discordapp.net/attachments/1200456272256970833/1465739796935610480/Spotifake-27-1-2569.png?ex=697a340f&is=6978e28f&hm=4695b85364bfc18b04c04464042206304e9c852efb1c2e32463d9655fd10368d&=&format=webp&quality=lossless&width=922&height=300" alt="Spotifake">
+        <div class="loading-bars">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+    </div>
+</div>
+
 <div class="bg" id="bg"></div>
 <div class="overlay" id="overlay"></div>
 <!-- Sidebar Playlist -->
@@ -107,5 +121,4 @@
 </div>
 <script src="script.js"></script>
 </body>
-
 </html>

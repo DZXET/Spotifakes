@@ -19,6 +19,99 @@ body.light {
     box-sizing: border-box;
 }
 
+/* Loading Screen Styles */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loading-screen.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.spotify-logo {
+    width: 300px;
+    max-width: 90vw;
+    height: auto;
+    animation: logoFade 2s ease-in-out infinite;
+    object-fit: contain;
+}
+
+@keyframes logoFade {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.loading-bars {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    height: 50px;
+}
+
+.loading-bars .bar {
+    width: 6px;
+    background: linear-gradient(to top, #1DB954, #1ed760);
+    border-radius: 3px;
+    animation: barDance 1.2s ease-in-out infinite;
+}
+
+.loading-bars .bar:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.loading-bars .bar:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.loading-bars .bar:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.loading-bars .bar:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.loading-bars .bar:nth-child(5) {
+    animation-delay: 0.4s;
+}
+
+@keyframes barDance {
+    0%, 100% {
+        height: 10px;
+    }
+    50% {
+        height: 50px;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
     background: var(--bg);
     height: 100vh;
