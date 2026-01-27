@@ -66,8 +66,6 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 50;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
 }
 
 /* Scrollbar Styling - WebKit (Chrome, Safari, Edge) */
