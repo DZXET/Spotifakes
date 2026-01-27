@@ -27,7 +27,23 @@
     </div>
     <!-- Song info -->
     <div class="song-info">
-        <h3 id="title">Song Title</h3>
+        <div class="song-title-row">
+            <button class="btn-miniplayer-inline" id="miniplayerBtn" title="Mini Player">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                    <path d="M7 10h10v4H7z"/>
+                </svg>
+            </button>
+            <h3 id="title">Song Title</h3>
+            <button class="btn-favourite-inline" id="favouriteBtn" title="Add to Favourites">
+                <svg class="heart-outline" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <svg class="heart-filled" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+            </button>
+        </div>
         <p id="artist">Artist Name</p>
     </div>
     <!-- Audio -->
