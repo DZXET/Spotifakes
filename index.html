@@ -13,6 +13,11 @@
 <!-- Sidebar Playlist -->
 <div class="sidebar" id="sidebar">
     <h3>Playlist</h3>
+    <div class="search-container">
+        <img class="search-icon" src="https://cdn-icons-png.freepik.com/512/68/68213.png" alt="search">
+        <input type="text" id="searchInput" placeholder="Search songs or artists..." class="search-input">
+        <button id="clearSearchBtn" class="clear-search-btn" title="Clear search" style="display: none;">✕</button>
+    </div>
     <div id="playlist"></div>
 </div>
 <div class="player">
@@ -28,12 +33,6 @@
     <!-- Song info -->
     <div class="song-info">
         <div class="song-title-row">
-            <button class="btn-miniplayer-inline" id="miniplayerBtn" title="Mini Player">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-                    <path d="M7 10h10v4H7z"/>
-                </svg>
-            </button>
             <h3 id="title">Song Title</h3>
             <button class="btn-favourite-inline" id="favouriteBtn" title="Add to Favourites">
                 <svg class="heart-outline" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

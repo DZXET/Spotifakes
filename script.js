@@ -22,11 +22,14 @@ const togglePlaylist = document.getElementById("togglePlaylist");
 
 const modeBtn = document.getElementById("modeBtn");
 const modeIcon = document.getElementById("modeIcon");
-const miniplayerBtn = document.getElementById("miniplayerBtn");
 
 const playlistBox = document.getElementById("playlist");
 const canvas = document.getElementById("wave");
 const ctx = canvas.getContext("2d");
+
+// Search elements - will be initialized later
+let searchInput = null;
+let clearSearchBtn = null;
 
 // Favourite button
 const favouriteBtn = document.getElementById("favouriteBtn");
@@ -383,12 +386,10 @@ function loadSong(idx, autoplay = false) {
             }, 1000);
         };
         
-        // Fade back in if was playing
-        if (wasPlaying || autoplay) {
-            setTimeout(() => {
-                bg.style.opacity = 1;
-            }, 100);
-        }
+        // Fade back in
+        setTimeout(() => {
+            bg.style.opacity = 1;
+        }, 100);
     }, 400);
     
     highlight();
@@ -552,8 +553,19 @@ let draggedCategory = null;
 function rebuildPlaylist() {
     playlistBox.innerHTML = '';
     
+    // Store current song reference before rebuilding
+    const currentSong = songs[index];
+    
     // Rebuild flat songs array
     songs = playlist.flatMap(cat => cat.songs);
+    
+    // Update index to match the current song's new position
+    if (currentSong) {
+        const newIndex = songs.findIndex(s => s.title === currentSong.title && s.artist === currentSong.artist);
+        if (newIndex !== -1) {
+            index = newIndex;
+        }
+    }
     
     playlist.forEach((category, catIndex) => {
         // Create category header
@@ -614,7 +626,7 @@ function rebuildPlaylist() {
         
         // Create songs in this category
         category.songs.forEach((s) => {
-            const songList = songs.findIndex(song => song.title === s.title);
+            const songList = songs.findIndex(song => song.title === s.title && song.artist === s.artist);
             const songKey = `${s.title}-${s.artist}`;
             const isFav = favourites.has(songKey);
             
@@ -625,6 +637,13 @@ function rebuildPlaylist() {
             const titleSpan = document.createElement("span");
             titleSpan.textContent = s.title;
             div.appendChild(titleSpan);
+            
+            // Song artist (hidden but searchable)
+            const artistSpan = document.createElement("span");
+            artistSpan.className = "song-artist";
+            artistSpan.textContent = s.artist;
+            artistSpan.style.display = 'none';
+            div.appendChild(artistSpan);
             
             // Favourite icon
             if (isFav) {
@@ -675,462 +694,6 @@ modeBtn.onclick = () => {
     updateVolumeUI();
 };
 
-/* ========== Mini Player Mode - Popup Window ========== */
-miniplayerBtn.onclick = () => {
-    // Get current song info
-    const currentSong = songs[index];
-    const currentTime = audio.currentTime;
-    const isPlaying = !audio.paused;
-    const currentVolume = audio.volume;
-    const isLightMode = document.body.classList.contains('light');
-    
-    // Create popup window with mini player
-    const width = 350;
-    const height = 500;
-    const left = (screen.width - width) - 50;
-    const top = 50;
-    
-    const popup = window.open(
-        '',
-        'miniPlayer',
-        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,menubar=no,toolbar=no,location=no,status=no`
-    );
-    
-    if (popup) {
-        // Build mini player HTML
-        popup.document.write(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Player - ${currentSong.title}</title>
-    <style>
-        :root {
-            --bg: #121212;
-            --card: #181818;
-            --text: #fff;
-            --sub: #b3b3b3;
-            --green: #1db954;
-            --progress-bg: #333;
-        }
-        
-        body.light {
-            --bg: #f2f2f2;
-            --card: #fff;
-            --text: #000;
-            --sub: #555;
-            --progress-bg: #ddd;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: background 0.4s ease, color 0.4s ease;
-        }
-        
-        .mini-header {
-            padding: 15px;
-            background: linear-gradient(135deg, var(--green) 0%, #169c46 100%);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .mini-header h2 {
-            font-size: 16px;
-            font-weight: bold;
-            color: #fff;
-        }
-        
-        .header-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .theme-btn,
-        .close-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .theme-btn:hover,
-        .close-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.1);
-        }
-        
-        .mini-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            align-items: center;
-            justify-content: center;
-            background: var(--card);
-        }
-        
-        .mini-cover {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            margin-bottom: 20px;
-            animation: spin 6s linear infinite;
-            animation-play-state: paused;
-        }
-        
-        .mini-cover.playing {
-            animation-play-state: running;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .mini-info {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .mini-info h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
-            color: var(--text);
-        }
-        
-        .mini-info p {
-            font-size: 13px;
-            color: var(--sub);
-        }
-        
-        .mini-progress {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        
-        .progress-bar-container {
-            width: 100%;
-            height: 6px;
-            background: var(--progress-bg);
-            border-radius: 20px;
-            cursor: pointer;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-        
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #1db954, #1ed760);
-            transition: width 0.1s linear;
-        }
-        
-        .progress-time {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--sub);
-        }
-        
-        .mini-controls {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        
-        .mini-btn {
-            background: none;
-            border: none;
-            color: var(--sub);
-            cursor: pointer;
-            transition: all 0.2s;
-            padding: 8px;
-        }
-        
-        .mini-btn:hover {
-            color: var(--text);
-            transform: scale(1.1);
-        }
-        
-        .mini-play-btn {
-            background: var(--green);
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .mini-play-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(29, 185, 84, 0.4);
-        }
-        
-        .mini-volume {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-        
-        .mini-volume img {
-            width: 22px;
-            filter: invert(1);
-        }
-        
-        body.light .mini-volume img {
-            filter: invert(0);
-        }
-        
-        .mini-volume input {
-            flex: 1;
-            height: 6px;
-            border-radius: 10px;
-            background: linear-gradient(to right, var(--green) 100%, var(--progress-bg) 0%);
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-            cursor: pointer;
-        }
-        
-        .mini-volume input::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--green);
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(30, 215, 96, .8);
-        }
-        
-        .mini-volume input::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--green);
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 10px rgba(30, 215, 96, .8);
-        }
-    </style>
-</head>
-<body${isLightMode ? ' class="light"' : ''}>
-    <div class="mini-header">
-        <h2>🎵 Mini Player</h2>
-        <div class="header-buttons">
-            <button class="theme-btn" id="themeBtn" title="Toggle Theme">${isLightMode ? '🌙' : '☀️'}</button>
-            <button class="close-btn" onclick="window.close()">×</button>
-        </div>
-    </div>
-    
-    <div class="mini-content">
-        <div class="mini-cover" id="miniCover" style="background-image: url('${currentSong.cover}')"></div>
-        
-        <div class="mini-info">
-            <h3 id="miniTitle">${currentSong.title}</h3>
-            <p id="miniArtist">${currentSong.artist}</p>
-        </div>
-        
-        <div class="mini-progress">
-            <div class="progress-bar-container" id="miniProgressBar">
-                <div class="progress-bar-fill" id="miniProgressFill"></div>
-            </div>
-            <div class="progress-time">
-                <span id="miniCurrent">0:00</span>
-                <span id="miniDuration">0:00</span>
-            </div>
-        </div>
-        
-        <div class="mini-controls">
-            <button class="mini-btn" id="miniPrev">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/>
-                </svg>
-            </button>
-            
-            <button class="mini-play-btn" id="miniPlay">
-                <svg id="miniPlayIcon" width="24" height="24" viewBox="0 0 24 24" fill="#000">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-                <svg id="miniPauseIcon" width="24" height="24" viewBox="0 0 24 24" fill="#000" style="display: none;">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                </svg>
-            </button>
-            
-            <button class="mini-btn" id="miniNext">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6v12z"/>
-                </svg>
-            </button>
-        </div>
-        
-        <div class="mini-volume">
-            <img id="miniVolumeIcon" src="https://pngimg.com/d/sound_PNG20.png" alt="volume">
-            <input type="range" min="0" max="1" step="0.01" value="${currentVolume}" id="miniVolume">
-        </div>
-    </div>
-    
-    <audio id="miniAudio" src="${currentSong.src}"></audio>
-    
-    <script>
-        const miniAudio = document.getElementById('miniAudio');
-        const miniCover = document.getElementById('miniCover');
-        const miniTitle = document.getElementById('miniTitle');
-        const miniArtist = document.getElementById('miniArtist');
-        const miniPlayBtn = document.getElementById('miniPlay');
-        const miniPlayIcon = document.getElementById('miniPlayIcon');
-        const miniPauseIcon = document.getElementById('miniPauseIcon');
-        const miniPrevBtn = document.getElementById('miniPrev');
-        const miniNextBtn = document.getElementById('miniNext');
-        const miniProgressBar = document.getElementById('miniProgressBar');
-        const miniProgressFill = document.getElementById('miniProgressFill');
-        const miniCurrent = document.getElementById('miniCurrent');
-        const miniDuration = document.getElementById('miniDuration');
-        const miniVolume = document.getElementById('miniVolume');
-        const miniVolumeIcon = document.getElementById('miniVolumeIcon');
-        const themeBtn = document.getElementById('themeBtn');
-        
-        // Set initial time and volume
-        miniAudio.currentTime = ${currentTime};
-        miniAudio.volume = ${currentVolume};
-        
-        // Theme toggle
-        themeBtn.onclick = () => {
-            document.body.classList.toggle('light');
-            const isLight = document.body.classList.contains('light');
-            themeBtn.textContent = isLight ? '🌙' : '☀️';
-            updateVolumeUI();
-        };
-        
-        // Format time
-        function formatTime(time) {
-            if (isNaN(time)) return '0:00';
-            const m = Math.floor(time / 60);
-            const s = Math.floor(time % 60).toString().padStart(2, '0');
-            return m + ':' + s;
-        }
-        
-        // Update volume UI
-        function updateVolumeUI() {
-            const value = miniVolume.value * 100;
-            const isLight = document.body.classList.contains('light');
-            const bgColor = isLight ? '#ddd' : '#333';
-            miniVolume.style.background = 'linear-gradient(to right, var(--green) ' + value + '%, ' + bgColor + ' ' + value + '%)';
-        }
-        
-        // Update progress
-        miniAudio.ontimeupdate = () => {
-            if (miniAudio.duration) {
-                const percent = (miniAudio.currentTime / miniAudio.duration) * 100;
-                miniProgressFill.style.width = percent + '%';
-                miniCurrent.textContent = formatTime(miniAudio.currentTime);
-                miniDuration.textContent = formatTime(miniAudio.duration);
-            }
-        };
-        
-        // Play/Pause
-        miniPlayBtn.onclick = () => {
-            if (miniAudio.paused) {
-                miniAudio.play();
-                miniPlayIcon.style.display = 'none';
-                miniPauseIcon.style.display = 'block';
-                miniCover.classList.add('playing');
-            } else {
-                miniAudio.pause();
-                miniPlayIcon.style.display = 'block';
-                miniPauseIcon.style.display = 'none';
-                miniCover.classList.remove('playing');
-            }
-        };
-        
-        // Progress bar click
-        miniProgressBar.onclick = (e) => {
-            if (!miniAudio.duration) return;
-            const rect = miniProgressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const newTime = (clickX / miniProgressBar.clientWidth) * miniAudio.duration;
-            miniAudio.currentTime = newTime;
-        };
-        
-        // Volume
-        miniVolume.oninput = () => {
-            miniAudio.volume = miniVolume.value;
-            updateVolumeUI();
-            
-            if (miniVolume.value == 0) {
-                miniVolumeIcon.src = 'https://upload.wikimedia.org/wikipedia/commons/8/85/Sound-off_black.png';
-            } else {
-                miniVolumeIcon.src = 'https://pngimg.com/d/sound_PNG20.png';
-            }
-        };
-        
-        // Initial volume UI update
-        updateVolumeUI();
-        
-        // Communicate with main window
-        miniPrevBtn.onclick = () => {
-            if (window.opener && !window.opener.closed) {
-                window.opener.postMessage({action: 'prev'}, '*');
-            }
-        };
-        
-        miniNextBtn.onclick = () => {
-            if (window.opener && !window.opener.closed) {
-                window.opener.postMessage({action: 'next'}, '*');
-            }
-        };
-        
-        // Start playing if it was playing
-        ${isPlaying ? 'miniAudio.play(); miniPlayIcon.style.display = "none"; miniPauseIcon.style.display = "block"; miniCover.classList.add("playing");' : ''}
-    </script>
-</body>
-</html>
-        `);
-        popup.document.close();
-    }
-};
-
-// Listen for messages from mini player
-window.addEventListener('message', (event) => {
-    if (event.data.action === 'prev') {
-        prev.click();
-    } else if (event.data.action === 'next') {
-        next.click();
-    }
-});
-
 /* ========== Time Format ========== */
 function format(time) {
     if (isNaN(time)) return "0:00";
@@ -1165,8 +728,102 @@ audio.onloadeddata = () => {
     console.log("Audio loaded successfully");
 };
 
+/* ========== Search Functionality ========== */
+function filterPlaylist(searchQuery) {
+    const query = searchQuery.toLowerCase().trim();
+    const allCategories = document.querySelectorAll('.category-header');
+    
+    console.log('Searching for:', query);
+    console.log('Found categories:', allCategories.length);
+    
+    if (query === '') {
+        // Show all when search is empty
+        allCategories.forEach(cat => {
+            cat.classList.remove('hidden');
+            // Show all songs in this category
+            let next = cat.nextElementSibling;
+            while (next && !next.classList.contains('category-header')) {
+                next.classList.remove('hidden');
+                next = next.nextElementSibling;
+            }
+        });
+        if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+        console.log('Showing all');
+    } else {
+        if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+        
+        // Hide all first
+        allCategories.forEach(cat => cat.classList.add('hidden'));
+        document.querySelectorAll('.playlist-song').forEach(song => song.classList.add('hidden'));
+        
+        // Show matching songs and their categories
+        let matchCount = 0;
+        allCategories.forEach(categoryHeader => {
+            let hasMatchingChild = false;
+            let current = categoryHeader.nextElementSibling;
+            
+            // Go through all songs in this category
+            while (current && !current.classList.contains('category-header')) {
+                // ดึง title span สำหรับ ชื่อเพลง
+                const titleSpan = current.querySelector('span');
+                // ดึง artist จากอ้อยไปตามหา data attribute หรือ text content
+                const songText = current.textContent.toLowerCase();
+                const titleText = titleSpan ? titleSpan.textContent.toLowerCase() : '';
+                
+                // ค้นหาทั้งชื่อเพลงและ artist
+                if (songText.includes(query) || titleText.includes(query)) {
+                    current.classList.remove('hidden');
+                    hasMatchingChild = true;
+                    matchCount++;
+                }
+                current = current.nextElementSibling;
+            }
+            
+            // Show category if it has matching songs
+            if (hasMatchingChild) {
+                categoryHeader.classList.remove('hidden');
+            }
+        });
+        console.log('Found matches:', matchCount);
+    }
+}
+
 /* ========== Initialize ========== */
 loadSong(index, false);
+rebuildPlaylist();
+
+// Initialize search elements after DOM is ready
+searchInput = document.getElementById("searchInput");
+clearSearchBtn = document.getElementById("clearSearchBtn");
+
+console.log('Initializing search - searchInput:', searchInput, 'clearSearchBtn:', clearSearchBtn);
+
+// Search event listeners
+if (searchInput && clearSearchBtn) {
+    console.log('Search input found, attaching listeners');
+    
+    searchInput.addEventListener('input', (e) => {
+        console.log('Search input event:', e.target.value);
+        filterPlaylist(e.target.value);
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        console.log('Clear button clicked');
+        searchInput.value = '';
+        filterPlaylist('');
+        searchInput.focus();
+    });
+
+    // Clear search when sidebar closes
+    overlay.addEventListener('click', () => {
+        console.log('Overlay clicked, clearing search');
+        searchInput.value = '';
+        filterPlaylist('');
+    });
+} else {
+    console.warn('Search elements not found after init - searchInput:', searchInput, 'clearSearchBtn:', clearSearchBtn);
+}
+
 audio.volume = 1;
 updateVolumeUI();
 drawWave();
