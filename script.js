@@ -56,6 +56,18 @@ let playlist = [
                 artist: "米津玄師, 宇多田ヒカル",
                 src: "song3.mp3",
                 cover: "cover3.jpg"
+            },
+            {
+                title: "Time Left",
+                artist: "ZUTOMAYO",
+                src: "song24.mp3",
+                cover: "cover24.jpg"
+            },
+            {
+                title: "Jouzai",
+                artist: "TOOBOE",
+                src: "song25.mp3",
+                cover: "cover25.jpg"
             }
         ]
     },
@@ -114,6 +126,83 @@ let playlist = [
                 artist: "ヨルシカ",
                 src: "song8.mp3",
                 cover: "cover8.jpg"
+            }
+        ]
+    },
+    {
+        category: "SHANGRI-LA FRONTIER",
+        songs: [
+            {
+                title: "BROKEN GAMES",
+                artist: "FZMZ",
+                src: "song26.mp3",
+                cover: "cover26.jpg"
+            },
+            {
+                title: "Danger Danger",
+                artist: "FZMZ",
+                src: "song27.mp3",
+                cover: "cover27.jpg"
+            },
+            {
+                title: "Frontiers",
+                artist: "Awich",
+                src: "song28.mp3",
+                cover: "cover28.jpg"
+            }
+        ]
+    },
+        {
+        category: "OVERLORD",
+        songs: [
+            {
+                title: "Clattanoia",
+                artist: "OxT",
+                src: "song29.mp3",
+                cover: "cover29.jpg"
+            },
+            {
+                title: "L.L.L",
+                artist: "MYTH & ROID",
+                src: "song30.mp3",
+                cover: "cover30.jpg"
+            },
+            {
+                title: "GO CRY GO",
+                artist: "OxT",
+                src: "song31.mp3",
+                cover: "cover31.jpg"
+            },
+            {
+                title: "HYDRA",
+                artist: "MYTH & ROID",
+                src: "song32.mp3",
+                cover: "cover32.jpg"
+            },
+            {
+                title: "VORACITY",
+                artist: "MYTH & ROID",
+                src: "song33.mp3",
+                cover: "cover33.jpg"
+            },
+            {
+                title: "Silent Solitude",
+                artist: "OxT",
+                src: "song34.mp3",
+                cover: "cover34.jpg"
+            }
+            ,
+            {
+                title: "Hollow Hunger",
+                artist: "OxT",
+                src: "song35.mp3",
+                cover: "cover35.jpg"
+            },
+            {
+                title: "No Man's Dawn",
+                artist: "Mayu Maeshima",
+                src: "song36.mp3",
+                cover: "cover36.jpg"
             }
         ]
     },
@@ -206,6 +295,87 @@ let playlist = [
                 artist: "Minori Chihara",
                 src: "song20.mp3",
                 cover: "cover20.jpg"
+            }
+        ]
+    },
+    {
+        category: "Death Note",
+        songs: [
+            {
+                title: "the WORLD",
+                artist: "NIGHTMARE",
+                src: "song37.mp3",
+                cover: "cover37.jpg"
+            },
+            {
+                title: "alumina",
+                artist: "NIGHTMARE",
+                src: "song38.mp3",
+                cover: "cover38.jpg"
+            }
+        ]
+    },
+    {
+        category: "Hunter x Hunter",
+        songs: [
+            {
+                title: "Departure",
+                artist: "Masatoshi Ono",
+                src: "songHxH.mp3",
+                cover: "coverHxH.jpg"
+            }
+        ]
+    },
+    {
+        category: "Jujutsu Kaisen",
+        songs: [
+            {
+                title: "廻廻奇譚",
+                artist: "Eve",
+                src: "song39.mp3",
+                cover: "cover39.jpg"
+            },
+            {
+                title: "LOST IN PARADISE",
+                artist: "ALI, AKLO",
+                src: "song40.mp3",
+                cover: "cover40.jpg"
+            },
+            {
+                title: "Ao No Sumika",
+                artist: "Tatsuya Kitani",
+                src: "song41.mp3",
+                cover: "cover41.jpg"
+            },
+            {
+                title: "give it back",
+                artist: "Cö shu Nie",
+                src: "song42.mp3",
+                cover: "cover42.jpg"
+            },
+            {
+                title: "more than words",
+                artist: "Hitsujibungaku",
+                src: "song43.mp3",
+                cover: "cover43.jpg"
+            },
+            {
+                title: "AKARI",
+                artist: "Soushi Sakiyama",
+                src: "song44.mp3",
+                cover: "cover44.jpg"
+            },
+            {
+                title: "AIZO",
+                artist: "King Gnu",
+                src: "song45.mp3",
+                cover: "cover45.jpg"
+            },
+            {
+                title: "Yoake no Uta",
+                artist: "jo0ji",
+                src: "song46.mp3",
+                cover: "cover46.jpg"
             }
         ]
     }
