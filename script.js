@@ -526,6 +526,11 @@ function loadSong(idx, autoplay = false) {
         // Update favourite button
         updateFavouriteButton();
         
+        // Update Media Session (notification player)
+        if (typeof updateMediaSession === "function") {
+            updateMediaSession();
+        }
+        
         // Load new audio
         audio.src = s.src;
         audio.load();
@@ -703,6 +708,11 @@ favouriteBtn.onclick = () => {
     
     saveFavourites();
     updateFavouriteButton();
+        
+        // Update Media Session (notification player)
+        if (typeof updateMediaSession === "function") {
+            updateMediaSession();
+        }
     rebuildPlaylist(); // Rebuild to update favourite icons
 };
 
@@ -1011,4 +1021,204 @@ window.addEventListener('load', () => {
             loadingScreen.style.display = 'none';
         }, 500);
     }, 1500);
+});/* ========== MEDIA SESSION API FOR NOTIFICATION PLAYER ========== */
+// This enables control from lock screen, notification bar, and media keys
+// Works on Android, iOS, and desktop browsers
+
+function updateMediaSession() {
+    // Check if Media Session API is supported
+    if ('mediaSession' in navigator) {
+        const currentSong = songs[index];
+        
+        // Set metadata for notification player
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: currentSong.title,
+            artist: currentSong.artist,
+            album: playlist.find(cat => cat.songs.includes(currentSong))?.category || 'Spotifake Player',
+            artwork: [
+                { src: currentSong.cover, sizes: '96x96', type: 'image/jpeg' },
+                { src: currentSong.cover, sizes: '128x128', type: 'image/jpeg' },
+                { src: currentSong.cover, sizes: '192x192', type: 'image/jpeg' },
+                { src: currentSong.cover, sizes: '256x256', type: 'image/jpeg' },
+                { src: currentSong.cover, sizes: '384x384', type: 'image/jpeg' },
+                { src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' }
+            ]
+        });
+
+        // Set up action handlers
+        navigator.mediaSession.setActionHandler('play', () => {
+            play().catch(err => console.error("Media session play error:", err));
+        });
+
+        navigator.mediaSession.setActionHandler('pause', () => {
+            pause();
+        });
+
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            if (!isLoadingSong) {
+                index = (index - 1 + songs.length) % songs.length;
+                loadSong(index, true);
+            }
+        });
+
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            if (!isLoadingSong) {
+                index = (index + 1) % songs.length;
+                loadSong(index, true);
+            }
+        });
+
+        // Seek backward (10 seconds)
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            const skipTime = details.seekOffset || 10;
+            audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
+        });
+
+        // Seek forward (10 seconds)
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            const skipTime = details.seekOffset || 10;
+            audio.currentTime = Math.min(audio.currentTime + skipTime, audio.duration);
+        });
+
+        // Seek to specific position
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+            if (details.fastSeek && 'fastSeek' in audio) {
+                audio.fastSeek(details.seekTime);
+            } else {
+                audio.currentTime = details.seekTime;
+            }
+        });
+
+        console.log('Media Session API initialized successfully');
+    } else {
+        console.log('Media Session API not supported in this browser');
+    }
+}
+
+// Update position state for notification player progress bar
+function updatePositionState() {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+        if (audio.duration && !isNaN(audio.duration)) {
+            try {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate,
+                    position: audio.currentTime
+                });
+            } catch (error) {
+                console.error('Failed to update position state:', error);
+            }
+        }
+    }
+}
+
+// Call updatePositionState periodically when playing
+audio.addEventListener('timeupdate', () => {
+    // Update every 1 second to avoid too many updates
+    if (audio.currentTime % 1 < 0.1) {
+        updatePositionState();
+    }
 });
+
+// Update when duration changes
+audio.addEventListener('durationchange', () => {
+    updatePositionState();
+});
+
+// Update when playback rate changes
+audio.addEventListener('ratechange', () => {
+    updatePositionState();
+});
+
+// Update when song is loaded
+audio.addEventListener('loadedmetadata', () => {
+    updatePositionState();
+});
+
+/* ========== PWA SERVICE WORKER FOR BETTER MOBILE EXPERIENCE ========== */
+// Register service worker if supported
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Create inline service worker
+        const swCode = `
+            self.addEventListener('install', (event) => {
+                console.log('Service Worker installed');
+                self.skipWaiting();
+            });
+            
+            self.addEventListener('activate', (event) => {
+                console.log('Service Worker activated');
+                return self.clients.claim();
+            });
+            
+            self.addEventListener('fetch', (event) => {
+                // Let the browser handle all requests normally
+                event.respondWith(fetch(event.request));
+            });
+        `;
+        
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(registration => {
+                console.log('Service Worker registered successfully');
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    });
+}
+
+/* ========== WAKE LOCK API TO PREVENT SCREEN SLEEP ========== */
+// Keep screen awake while playing (useful for lyrics reading)
+let wakeLock = null;
+
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock activated');
+            
+            wakeLock.addEventListener('release', () => {
+                console.log('Wake Lock released');
+            });
+        } catch (err) {
+            console.log('Wake Lock error:', err);
+        }
+    }
+}
+
+async function releaseWakeLock() {
+    if (wakeLock !== null) {
+        try {
+            await wakeLock.release();
+            wakeLock = null;
+        } catch (err) {
+            console.log('Wake Lock release error:', err);
+        }
+    }
+}
+
+// Request wake lock when playing
+audio.addEventListener('play', () => {
+    requestWakeLock();
+});
+
+// Release wake lock when paused
+audio.addEventListener('pause', () => {
+    releaseWakeLock();
+});
+
+// Release on page hide
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        // Don't release wake lock, let it continue in background
+    }
+});
+
+console.log('Mobile enhancements loaded: Media Session API, Wake Lock, PWA support');
+
+/* ========== VERSION INFO ========== */
+console.log('%c🎵 Spotifake Music Player v2.0 🎵', 'color: #1DB954; font-size: 16px; font-weight: bold;');
+console.log('%cFeatures: Mobile Responsive | Notification Player | PWA | Wake Lock', 'color: #b3b3b3; font-size: 10px;');

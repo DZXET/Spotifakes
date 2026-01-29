@@ -2,10 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Spotify Style Player</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="icon.png">
+    
+    <!-- PWA Support for better mobile experience -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1db954">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
     
     <!-- Open Graph Meta Tags (Facebook, LinkedIn, etc.) -->
     <meta property="og:title" content="Spotifake Music Player">
@@ -35,6 +44,10 @@
             <div class="bar"></div>
             <div class="bar"></div>
             <div class="bar"></div>
+        </div>
+        <div class="loading-credits">
+            <p class="version">Version 2.0</p>
+            <p class="creator">Created by <span class="creator-name">DZXET</span></p>
         </div>
     </div>
 </div>
@@ -121,5 +134,4 @@
 </div>
 <script src="script.js"></script>
 </body>
-
 </html>
